@@ -97,14 +97,14 @@ class overLay:
         # os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
         config = configparser.ConfigParser()
-        
+
         try:
             config.read('timer.ini')
-            
+
             self.startKey = config['hotkey']['start']
             self.stopKey = config['hotkey']['stop']
             self.resetKey = config['hotkey']['reset']
-            
+
             # 프리셋
             self.presetKey = []
             self.minutePreset = []
@@ -114,7 +114,7 @@ class overLay:
                 self.presetKey.append(config['hotkey'][f'preset{i+1}'])
                 self.minutePreset.append(int(config[f'preset{i+1}']['minute']))
                 self.secondPreset.append(int(config[f'preset{i+1}']['second']))
-                
+
             # 오버레이 위치
             self.windowX = int(config['overlayLocation']['x'])
             self.windowY = int(config['overlayLocation']['y'])
@@ -122,51 +122,49 @@ class overLay:
             # 기본 타이머값
             self.defaultMinute = int(config['timer']['defaultMinute'])
             self.defaultSecond = int(config['timer']['defaultSecond'])
-            
+
             if self.defaultSecond >= 60:
                 self.defaultSecond = 0
                 self.defaultMinute += 1
-            
+
             self.minute = self.defaultMinute
             self.second = self.defaultSecond
-            
+
             self.transValue = int(config['etc']['trans'])
             self.volumeValue = int(config['etc']['volume'])
-            
-            
-            if self.transValue < 10:
-                self.transValue = 10
-            
+
+
+            self.transValue = max(self.transValue, 10)
             self.timeLabel['text'] = f'{self.minute} : {self.second}'
             self.timer.attributes("-alpha", self.transValue / 100)
             mixer.music.set_volume(self.volumeValue / 100)
-            
+
             self.afterID = ''
             self.timerCheck = False
-            
+
             # 핫키 설정
             keyboard.add_hotkey(self.startKey, lambda: self.duplicateCheck())
             keyboard.add_hotkey(self.stopKey, lambda: self.timerStop())
             keyboard.add_hotkey(self.resetKey, lambda: self.timerReset())
-                
+
             keyboard.add_hotkey(self.presetKey[0], lambda: self.timerSet(key=0))
             keyboard.add_hotkey(self.presetKey[1], lambda: self.timerSet(key=1))
             keyboard.add_hotkey(self.presetKey[2], lambda: self.timerSet(key=2))
             keyboard.add_hotkey(self.presetKey[3], lambda: self.timerSet(key=3))
             keyboard.add_hotkey(self.presetKey[4], lambda: self.timerSet(key=4))
-            
+
         except: # 설정파일에 오류가 있으면 다시 설정파일 맨듬
-            
+
             config['timer'] = {
                 'defaultMinute': 30,
                 'defaultSecond': 0
             }
-            
+
             config['etc'] = {
                 'volume': 100,
                 'trans': 100
             }
-            
+
             config['overlayLocation'] = {
                 'x': 50,
                 'y': 180
@@ -176,27 +174,27 @@ class overLay:
                 'minute': '20',
                 'second': '0'
             }
-            
+
             config['preset2'] = {
                 'minute': '15',
                 'second': '0'
             }
-            
+
             config['preset3'] = {
                 'minute': '10',
                 'second': '0'
             }
-            
+
             config['preset4'] = {
                 'minute': '5',
                 'second': '0'
             }
-            
+
             config['preset5'] = {
                 'minute': '2',
                 'second': '0'
             }
-            
+
             config['hotkey'] = {
                 'start': 'F10',
                 'stop': 'F11',
@@ -207,12 +205,12 @@ class overLay:
                 'preset4': 'ctrl+4',
                 'preset5': 'ctrl+5'
             }
-            
+
             with open('./timer.ini', 'w') as f:
                 config.write(f)
                 tkinter.messagebox.showwarning(title='Error', message='ini 파일이 손상되어 재설정하였습니다.')
                 sys.exit()
-                   
+
         return
     
     # 따이머 프리셋
@@ -336,18 +334,18 @@ class overLay:
     def timerStart(self):
         # os.chdir(os.path.dirname(os.path.abspath(__file__)))
         self.afterID = self.timer.after(1000, self.timerStart)
-        
+
         operationTime = self.minute * 60 + self.second - 1
         self.minute = operationTime // 60
         self.second = operationTime % 60
-        
+
         self.timeLabel['text'] = f'{self.minute} : {self.second:.0f}'
-        
+
         # 0 : 0 초 알람
         if self.minute <= 0 and self.second <= 0:
             self.minute = self.defaultMinute
             self.second = self.defaultSecond
-            
+
             try:
                 mixer.music.load('alram.mp3')
                 mixer.music.play()
@@ -378,12 +376,12 @@ class overLay:
     # overLay 위치
     def windowPosition(self):
         self.timer.after(1, self.windowPosition)
-        
+
         # 활성화된 창
         try:
             windowHandle = GetForegroundWindow()
             windowTitle = GetWindowText(windowHandle)
-            
+
             if windowTitle != 'MapleStory':
                 self.timer.wm_attributes('-topmost', 0)
             else:
@@ -392,7 +390,7 @@ class overLay:
             # 창하고 같이 이동
             windowHandle = FindWindow(None, 'MapleStory')
             windowRect = GetWindowRect(windowHandle)
-            
+
             x, y = int(windowRect[0])+self.windowX, int(windowRect[1])+self.windowY
             self.timer.geometry(f'+{x}+{y}')
         except:
@@ -448,7 +446,7 @@ class overLay:
                 scheduledStart = re.findall("<startDateTime>(.*?)</startDateTime>",resp.text)
                 scheduledEnd = re.findall("<endDateTime>(.*?)</endDateTime>",resp.text)
                 content = re.findall("<strObstacleContents>(.*?)</strObstacleContents>",resp.text)
-                
+
                 tkinter.messagebox.showinfo(title='메이플스토리 팅패치 정보', 
                                             message=f'시작예정 : {scheduledStart[0]}\n종료예정 : {scheduledEnd[0]}\n패치내용 : {content[0]}') 
             else:
